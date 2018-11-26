@@ -17,25 +17,45 @@ export class ApiError extends Error {
   }
 }
 
-export const api = <T>(handler: ApiHandler<T>) => (
+export interface IApiOptions {
+  contentType: string;
+}
+
+const defaultApiOptions: IApiOptions = {
+  contentType: 'application/json',
+};
+
+export const api = <T>(
+  handler: ApiHandler<T>,
+  userOptions?: Partial<IApiOptions>,
+) => (
   gatewayEvent: awsTypes.APIGatewayEvent,
   _: awsTypes.Context,
   callback: awsTypes.Callback,
 ) => {
-  const response = (value: any, statusCode: number = 200) =>
+  const options: IApiOptions = userOptions
+    ? { ...defaultApiOptions, ...userOptions }
+    : defaultApiOptions;
+  const response = (value: any, statusCode: number, contentType: string) =>
     callback(null, {
       statusCode,
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': contentType,
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Credentials': true,
       },
-      body: JSON.stringify(value),
+      body: options.contentType.includes('json')
+        ? JSON.stringify(value)
+        : value,
     });
+
+  const ok = (value: any, statusCode: number = 200) =>
+    response(value, statusCode, options.contentType);
   const error = (err: any, statusCode: number = 500) =>
     response(
       err.message || 'Server has encountered an error.',
       err.statusCode || statusCode,
+      'application/json',
     );
 
   try {
@@ -49,9 +69,9 @@ export const api = <T>(handler: ApiHandler<T>) => (
     };
     const result = handler(request);
     if (result && result instanceof Promise) {
-      return result.then(response).catch(error);
+      return result.then(ok).catch(error);
     } else {
-      return response(result);
+      return ok(result);
     }
   } catch (err) {
     return error(err);
