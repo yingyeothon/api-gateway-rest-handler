@@ -25,7 +25,7 @@ const defaultApiOptions: IApiOptions = {
   contentType: 'application/json',
 };
 
-export const api = <T>(
+export const api = <T = any>(
   handler: ApiHandler<T>,
   userOptions?: Partial<IApiOptions>,
 ) => (
