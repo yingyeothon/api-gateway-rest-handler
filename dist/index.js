@@ -12,6 +12,17 @@ var __extends = (this && this.__extends) || (function () {
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
     };
 })();
+var __assign = (this && this.__assign) || function () {
+    __assign = Object.assign || function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+                t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 var ApiError = /** @class */ (function (_super) {
     __extends(ApiError, _super);
@@ -25,22 +36,32 @@ var ApiError = /** @class */ (function (_super) {
     return ApiError;
 }(Error));
 exports.ApiError = ApiError;
-exports.api = function (handler) { return function (gatewayEvent, _, callback) {
-    var response = function (value, statusCode) {
-        if (statusCode === void 0) { statusCode = 200; }
+var defaultApiOptions = {
+    contentType: 'application/json',
+};
+exports.api = function (handler, userOptions) { return function (gatewayEvent, _, callback) {
+    var options = userOptions
+        ? __assign({}, defaultApiOptions, userOptions) : defaultApiOptions;
+    var response = function (value, statusCode, contentType) {
         return callback(null, {
             statusCode: statusCode,
             headers: {
-                'Content-Type': 'application/json',
+                'Content-Type': contentType,
                 'Access-Control-Allow-Origin': '*',
                 'Access-Control-Allow-Credentials': true,
             },
-            body: JSON.stringify(value),
+            body: options.contentType.includes('json')
+                ? JSON.stringify(value)
+                : value,
         });
+    };
+    var ok = function (value, statusCode) {
+        if (statusCode === void 0) { statusCode = 200; }
+        return response(value, statusCode, options.contentType);
     };
     var error = function (err, statusCode) {
         if (statusCode === void 0) { statusCode = 500; }
-        return response(err.message || 'Server has encountered an error.', err.statusCode || statusCode);
+        return response(err.message || 'Server has encountered an error.', err.statusCode || statusCode, 'application/json');
     };
     try {
         var request = {
@@ -54,10 +75,10 @@ exports.api = function (handler) { return function (gatewayEvent, _, callback) {
         };
         var result = handler(request);
         if (result && result instanceof Promise) {
-            return result.then(response).catch(error);
+            return result.then(ok).catch(error);
         }
         else {
-            return response(result);
+            return ok(result);
         }
     }
     catch (err) {

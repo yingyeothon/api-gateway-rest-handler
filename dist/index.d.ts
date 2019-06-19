@@ -18,4 +18,7 @@ export declare class ApiError extends Error {
     statusCode: number;
     constructor(message: string, statusCode?: number);
 }
-export declare const api: <T>(handler: ApiHandler<T>) => (gatewayEvent: awsTypes.APIGatewayProxyEvent, _: awsTypes.Context, callback: awsTypes.Callback<any>) => void | Promise<void>;
+export interface IApiOptions {
+    contentType: string;
+}
+export declare const api: <T = any>(handler: ApiHandler<T>, userOptions?: Partial<IApiOptions> | undefined) => (gatewayEvent: awsTypes.APIGatewayProxyEvent, _: awsTypes.Context, callback: awsTypes.Callback<any>) => void | Promise<void>;
