@@ -61,6 +61,7 @@ exports.api = function (handler, userOptions) { return function (gatewayEvent, _
     };
     var error = function (err, statusCode) {
         if (statusCode === void 0) { statusCode = 500; }
+        console.error(err);
         return response(err.message || 'Server has encountered an error.', err.statusCode || statusCode, 'application/json');
     };
     try {
@@ -82,7 +83,6 @@ exports.api = function (handler, userOptions) { return function (gatewayEvent, _
         }
     }
     catch (err) {
-        console.error(err);
         error(err);
     }
 }; };
