@@ -69,11 +69,12 @@ export const api = <T = any>(
     };
     const result = handler(request);
     if (result && result instanceof Promise) {
-      return result.then(ok).catch(error);
+      result.then(ok).catch(error);
     } else {
-      return ok(result);
+      ok(result);
     }
   } catch (err) {
-    return error(err);
+    console.error(err);
+    error(err);
   }
 };
