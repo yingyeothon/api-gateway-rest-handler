@@ -51,12 +51,14 @@ export const api = <T = any>(
 
   const ok = (value: any, statusCode: number = 200) =>
     response(value, statusCode, options.contentType);
-  const error = (err: any, statusCode: number = 500) =>
-    response(
+  const error = (err: any, statusCode: number = 500) => {
+    console.error(err);
+    return response(
       err.message || 'Server has encountered an error.',
       err.statusCode || statusCode,
       'application/json',
     );
+  };
 
   try {
     const request = {
@@ -74,7 +76,6 @@ export const api = <T = any>(
       ok(result);
     }
   } catch (err) {
-    console.error(err);
     error(err);
   }
 };
